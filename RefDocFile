@@ -1,0 +1,37 @@
+from golang:latest as builder
+
+# Set the working directory inside the container
+WORKDIR /app
+
+# Clone the fabric repository
+RUN git clone https://github.com/danielmiessler/fabric.git
+
+# Change directory to the cloned repository
+WORKDIR /app/fabric
+
+# Run the Go build command
+RUN go build -buildvcs=false -o fabric
+
+FROM ubuntu:jammy
+
+RUN apt update && apt install ca-certificates -y && update-ca-certificates
+
+# Set environment variables
+ENV APP_HOME /home/appuser/app
+
+# Create a non-root user
+RUN useradd --create-home -u 1000 -m appuser
+
+# Create the application directory and set ownership
+RUN mkdir -p $APP_HOME && chown -R appuser:appuser $APP_HOME
+
+# Set the working directory to the application directory
+WORKDIR $APP_HOME
+USER appuser
+
+COPY --from=builder /app/fabric/fabric $APP_HOME/fabric
+
+ENV PATH="$PATH:$APP_HOME"
+
+# Set the entrypoint to run a persistent command
+CMD ["tail", "-f", "/dev/null"]
