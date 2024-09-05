@@ -1,8 +1,3 @@
-FROM alpine/git AS copier
-WORKDIR /home
-RUN git clone https://github.com/silversurfer98/zsh_setup
-#RUN ls -all /home/zsh_setup
-
 # base image
 FROM ubuntu:jammy
 
@@ -44,11 +39,13 @@ RUN unzip FiraCode.zip -d $HOME/.fonts && fc-cache -fv
 # setup starship
 RUN curl -sS https://starship.rs/install.sh | sh -s -- -y
 
-# copy configs
-COPY --from=copier /home/zsh_setup/ $HOME
-
-#change workdir to home again
+# clone zsh setup
 WORKDIR $HOME
+RUN git clone https://github.com/silversurfer98/zsh_setup
+
+
+# copy configs
+RUN cp -R $HOME/zsh_setup/.config $HOME && cp -R $HOME/zsh_setup/.zsh $HOME && cp $HOME/zsh_setup/.zshrc $HOME
 
 # change to zsh
 RUN sudo chsh -s $(which zsh)
